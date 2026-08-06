@@ -12,6 +12,12 @@ vercel --prod
 
 ## Catálogo
 
-| Proyecto | Categoría | Vercel |
-| -------- | --------- | ------ |
-Push/update del README para listar los demos conforme se añaden.
+| Proyecto | Categoría | Carpeta | Vercel |
+| -------- | --------- | ------- | ------ |
+| Aurora Sky | Visual | `demos/aurora-sky` | _pendiente_ |
+| Crypto Dashboard | Web App | `demos/crypto-dashboard` | _pendiente_ |
+| JSON Launder | Tool | `demos/json-launder` | _pendiente_ |
+| Neural Glow | Creative | `demos/neural-glow` | _pendiente_ |
+| Palette Loom | Tool | `demos/palette-loom` | _pendiente_ |
+| Pomodoro Ember | Web App | `demos/pomodoro-ember` | _pendiente_ |
+| Type Racer | Tool | `demos/type-racer` | _pendiente_ |
