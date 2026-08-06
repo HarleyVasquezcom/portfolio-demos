@@ -14,10 +14,10 @@ vercel --prod
 
 | Proyecto | Categoría | Carpeta | Vercel |
 | -------- | --------- | ------- | ------ |
-| Aurora Sky | Visual | `demos/aurora-sky` | _pendiente_ |
-| Crypto Dashboard | Web App | `demos/crypto-dashboard` | _pendiente_ |
-| JSON Launder | Tool | `demos/json-launder` | _pendiente_ |
-| Neural Glow | Creative | `demos/neural-glow` | _pendiente_ |
-| Palette Loom | Tool | `demos/palette-loom` | _pendiente_ |
-| Pomodoro Ember | Web App | `demos/pomodoro-ember` | _pendiente_ |
-| Type Racer | Tool | `demos/type-racer` | _pendiente_ |
+| Aurora Sky | Visual | `demos/aurora-sky` | [aurora-sky-nu.vercel.app](https://aurora-sky-nu.vercel.app) |
+| Crypto Dashboard | Web App | `demos/crypto-dashboard` | [crypto-dashboard-kappa-blond.vercel.app](https://crypto-dashboard-kappa-blond.vercel.app) |
+| JSON Launder | Tool | `demos/json-launder` | [json-launder.vercel.app](https://json-launder.vercel.app) |
+| Neural Glow | Creative | `demos/neural-glow` | [neural-glow.vercel.app](https://neural-glow.vercel.app) |
+| Palette Loom | Tool | `demos/palette-loom` | [palette-loom.vercel.app](https://palette-loom.vercel.app) |
+| Pomodoro Ember | Web App | `demos/pomodoro-ember` | [pomodoro-ember.vercel.app](https://pomodoro-ember.vercel.app) |
+| Type Racer | Tool | `demos/type-racer` | [type-racer-indol.vercel.app](https://type-racer-indol.vercel.app) |
