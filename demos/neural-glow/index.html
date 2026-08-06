@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Neural Glow — Interactive Particles</title>
+<style>
+  :root { --bg:#09090b; --fg:#fafafa; --muted:#a1a1aa; --border:#27272a; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--fg); font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; overflow:hidden; }
+  canvas { position:fixed; inset:0; display:block; cursor:crosshair; }
+  .hud { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:10;
+    display:flex; gap:12px; align-items:center; padding:10px 16px; background:#18181bcc;
+    border:1px solid var(--border); border-radius:999px; backdrop-filter:blur(10px); }
+  .hud .dot { width:12px; height:12px; border-radius:50%; background:#22d3ee; box-shadow:0 0 10px #22d3ee; animation:pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity:.4; } }
+  .hud span { color:var(--muted); font-size:12px; }
+  .hud b { color:var(--fg); font-variant-numeric:tabular-nums; }
+</style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div class="hud">
+    <span>particles <b id="n">0</b></span><span>·</span><span>links <b id="l">0</b></span><span>·</span><span>move + click to repel</span>
+  </div>
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+let W=0, H=0;
+function resize(){ const dpr=Math.min(devicePixelRatio||1,2); W=innerWidth; H=innerHeight; c.width=W*dpr; c.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); }
+addEventListener('resize', resize); resize();
+
+const N = 90;
+const pts = [];
+for (let i=0;i<N;i++) pts.push({ x:Math.random()*W, y:Math.random()*H, vx:(Math.random()-.5)*.5, vy:(Math.random()-.5)*.5 });
+const GLOW = ['#22d3ee','#34d399','#a78bfa'];
+const mouse = { x:-1e4, y:-1e4 };
+
+c.addEventListener('pointermove', e => { mouse.x=e.clientX; mouse.y=e.clientY; });
+c.addEventListener('pointerdown', e => {
+  const R = 140;
+  for (const p of pts) {
+    const dx=p.x-e.clientX, dy=p.y-e.clientY, d=Math.hypot(dx,dy);
+    if (d<R && d>1e-6){ const f=(R-d)/R*6; p.vx+=dx/d*f; p.vy+=dy/d*f; }
+  }
+});
+
+function frame(){
+  ctx.fillStyle='rgba(9,9,11,0.22)';
+  ctx.fillRect(0,0,W,H);
+  let links=0;
+  for (let i=0;i<N;i++){
+    const p=pts[i];
+    p.vx*=0.985; p.vy*=0.985;
+    p.vx += (Math.random()-.5)*.06;
+    p.vy += (Math.random()-.5)*.06;
+    const mdx=p.x-mouse.x, mdy=p.y-mouse.y, md=Math.hypot(mdx,mdy);
+    if (md<130 && md>1e-6){ const f=(130-md)/130*1.4; p.vx+=mdx/md*f; p.vy+=mdy/md*f; }
+    p.x+=p.vx; p.y+=p.vy;
+    if (p.x<0)p.x=W; if(p.x>W)p.x=0; if(p.y<0)p.y=H; if(p.y>H)p.y=0;
+    for (let j=i+1;j<N;j++){
+      const q=pts[j];
+      const d=Math.hypot(p.x-q.x,p.y-q.y);
+      if (d<110){
+        links++;
+        ctx.strokeStyle = GLOW[i%3];
+        ctx.globalAlpha=(1-d/110)*0.32;
+        ctx.lineWidth=.7;
+        ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke();
+        ctx.globalAlpha=1;
+      }
+    }
+    ctx.fillStyle = GLOW[i%3];
+    ctx.globalAlpha = 0.9;
+    ctx.beginPath(); ctx.arc(p.x,p.y,2,0,7); ctx.fill();
+    ctx.globalAlpha = .12;
+    ctx.beginPath(); ctx.arc(p.x,p.y,12,0,7); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  document.getElementById('n').textContent = N;
+  document.getElementById('l').textContent = links;
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Aurora Sky — Generative Canvas</title>
+<style>
+  :root {
+    --bg: #09090b;
+    --fg: #fafafa;
+    --muted: #a1a1aa;
+    --accent: #10b981;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    overflow: hidden;
+  }
+  #sky { position: fixed; inset: 0; display: block; }
+  .hud {
+    position: fixed; top: 24px; left: 24px; z-index: 10;
+    pointer-events: none; color: var(--muted); font-size: 13px; line-height: 1.7;
+  }
+  .hud b { color: var(--fg); font-weight: 600; }
+  .controls {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    z-index: 10; display: flex; gap: 10px; padding: 8px;
+    background: #18181bcc; border: 1px solid #27272a; border-radius: 999px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  .controls button {
+    border: 1px solid #27272a; background: #09090b; color: var(--muted);
+    font: inherit; font-size: 13px; padding: 8px 14px; border-radius: 999px;
+    cursor: pointer; transition: all .2s ease;
+  }
+  .controls button:hover { color: var(--fg); border-color: #3f3f46; }
+  .controls button.active { background: #10b981; color: #09090b; border-color: #10b981; font-weight: 600; }
+</style>
+</head>
+<body>
+  <canvas id="sky"></canvas>
+  <div class="hud">
+    AURORA·SKY<br />
+    <b id="fps">-- fps</b> · <span id="mode">aurora</span><br />
+    move pointer to warp
+  </div>
+  <div class="controls">
+    <button data-mode="aurora" class="active">Aurora</button>
+    <button data-mode="coral">Coral</button>
+    <button data-mode="vector">Vector</button>
+  </div>
+<script>
+const canvas = document.getElementById('sky');
+const ctx = canvas.getContext('2d');
+const fpsEl = document.getElementById('fps');
+const modeEl = document.getElementById('mode');
+let mode = 'aurora';
+let W = 1, H = 1;
+const mouse = { x: 0.5, y: 0.5 };
+const instants = [];
+
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+canvas.addEventListener('pointermove', (e) => {
+  mouse.x = e.clientX / W;
+  mouse.y = e.clientY / H;
+});
+
+document.querySelectorAll('.controls button').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.controls button').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    mode = btn.dataset.mode;
+    modeEl.textContent = mode;
+    const rect = btn.getBoundingClientRect();
+    instants.push({
+      x: (rect.left + rect.width / 2) / W,
+      y: (rect.top + rect.height / 2) / H,
+      t: performance.now(),
+    });
+  });
+});
+
+const PALETTES = {
+  aurora: ['#10b981', '#34d399', '#22d3ee', '#06b6d4'],
+  coral: ['#fb7185', '#f43f5e', '#fbbf24', '#f97316'],
+  vector: ['#22d3ee', '#a78bfa', '#f472b6', '#34d399'],
+};
+
+function wave(t, seed, push) {
+  return (
+    Math.sin(t * 0.0006 + seed * 12.9898) * 0.5 +
+    Math.sin(t * 0.0011 + seed * 78.233) * 0.3 +
+    Math.sin(t * 0.0004 + seed * 3.17 + push.x * 9) * 0.2
+  );
+}
+
+function draw() {
+  const t = performance.now();
+  const pal = PALETTES[mode] ?? PALETTES.aurora;
+  ctx.fillStyle = '#09090b';
+  ctx.fillRect(0, 0, W, H);
+
+  const layers = 4;
+  for (let i = 0; i < layers; i++) {
+    const yBase = H * 0.18 + (i / (layers - 1 || 1)) * H * 0.55;
+    const amp = 90 + i * 34;
+    const color = pal[i % pal.length];
+    const pushY = (mouse.y - 0.5) * 90;
+
+    ctx.beginPath();
+    for (let x = 0; x <= W; x += 6) {
+      const n = wave(t, i * 0.35 + x * 0.001, mouse);
+      const y = yBase + n * amp + pushY;
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.lineTo(W, H);
+    ctx.lineTo(0, H);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.05 + i * 0.055;
+    ctx.fill();
+  }
+
+  for (let i = instants.length - 1; i >= 0; i--) {
+    const p = instants[i];
+    const age = (t - p.t) / 1600;
+    if (age > 1) { instants.splice(i, 1); continue; }
+    const sx = (p.x - age * 0.6) * W;
+    const sy = (p.y + age * 0.4) * H;
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(sx + 90, sy - 34);
+    ctx.strokeStyle = '#fafafa';
+    ctx.globalAlpha = (1 - age) * 0.7;
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  requestAnimationFrame(draw);
+}
+
+// FPS meter
+let frames = 0;
+let last = performance.now();
+setInterval(() => {
+  const now = performance.now();
+  fpsEl.textContent = Math.round((frames * 1000) / (now - last));
+  frames = 0;
+  last = now;
+}, 1000);
+
+const origRaf = window.requestAnimationFrame.bind(window);
+window.requestAnimationFrame = (cb) => { frames++; return origRaf(cb); };
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>

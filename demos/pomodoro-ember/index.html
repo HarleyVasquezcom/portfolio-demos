@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pomodoro Ember — Focus Timer</title>
+<style>
+  :root {
+    --bg:#09090b; --fg:#fafafa; --muted:#a1a1aa; --border:#27272a; --border-hover:#3f3f46;
+    --focus:#f97316; --short:#22d3ee; --long:#34d399;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { min-height:100vh; background:radial-gradient(900px 500px at 50% -10%, rgba(249,115,22,.07), transparent 60%), var(--bg);
+    color:var(--fg); font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; display:flex; align-items:center; justify-content:center; padding:24px; }
+  .wrap { width:100%; max-width:480px; }
+  .modes { display:flex; gap:6px; background:#131316; border:1px solid var(--border); border-radius:999px; padding:6px; margin-bottom:28px; }
+  .modes button { flex:1; border:none; background:transparent; color:var(--muted); font:inherit; font-size:13px; padding:9px 0; border-radius:999px; cursor:pointer; transition:all .2s; }
+  .modes button.active { color:var(--bg); font-weight:700; background:#fafafa; }
+  .ring { position:relative; width:280px; height:280px; margin:0 auto 28px; }
+  .ring svg { transform:rotate(-90deg); width:100%; height:100%; }
+  .ring .track { stroke:var(--border); }
+  .ring .bar { stroke:var(--color); stroke-linecap:round; transition:stroke-dashoffset .3s linear, stroke .3s; filter:drop-shadow(0 0 8px color-mix(in srgb, var(--color) 60%, transparent)); }
+  .center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; }
+  .time { font-size:52px; font-weight:300; letter-spacing:.01em; font-variant-numeric:tabular-nums; }
+  .session { color:var(--muted); font-size:12px; letter-spacing:.18em; text-transform:uppercase; }
+  .actions { display:flex; gap:10px; justify-content:center; }
+  .actions button { border:1px solid var(--border); background:var(--bg-elev, #131316); color:var(--fg); font:inherit; font-size:13px; padding:10px 18px; border-radius:10px; cursor:pointer; transition:all .2s; }
+  .actions button:hover { border-color:var(--border-hover); }
+  #reset:hover { color:#f87171; border-color:#f87171; }
+  .timerlabel { text-align:center; color:var(--muted); font-size:12px; margin-top:16px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="modes" role="group" aria-label="timer mode">
+      <button data-min="25" data-color="#f97316" class="active">Focus 25</button>
+      <button data-min="5" data-color="#22d3ee">Short 5</button>
+      <button data-min="15" data-color="#34d399">Long 15</button>
+    </div>
+    <div class="ring">
+      <svg viewBox="0 0 280 280">
+        <circle class="track" cx="140" cy="140" r="128" fill="none" stroke-width="10"/>
+        <circle class="bar" cx="140" cy="140" r="128" fill="none" stroke-width="10" stroke-dasharray="804.2" stroke-dashoffset="0"/>
+      </svg>
+      <div class="center">
+        <div class="time" id="time">25:00</div>
+        <div class="session" id="session">focus</div>
+      </div>
+    </div>
+    <div class="actions">
+      <button id="toggle">Start</button>
+      <button id="reset">Reset</button>
+      <button id="skip">Skip</button>
+    </div>
+    <div class="timerlabel" id="cycle-label">cycles: 0</div>
+  </div>
+<script>
+const MINUTE = 60;
+const circumference = 2 * Math.PI * 128;
+const bar = document.querySelector('.ring .bar');
+const circle = document.querySelector('.ring .track');
+circle.style.strokeDasharray = circumference;
+bar.style.strokeDasharray = circumference;
+
+let total = MINUTE * 25;
+let remaining = total;
+let running = false;
+let raf = null;
+let lastTs = 0;
+let cycles = 0;
+let color = '#f97316';
+
+const $ = (id) => document.getElementById(id);
+
+function setBar() {
+  const frac = remaining / total;
+  bar.style.strokeDashoffset = circumference * (1 - frac);
+}
+
+function paint() {
+  const m = Math.floor(remaining / 60);
+  const s = Math.floor(remaining % 60);
+  $('time').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  document.title = `${$('time').textContent} — focus`;
+  document.documentElement.style.setProperty('--color', color);
+  setBar();
+}
+
+function startLoop() {
+  cancelAnimationFrame(raf);
+  lastTs = performance.now();
+  const step = (ts) => {
+    if (!running) return;
+    const delta = (ts - lastTs) / 1000;
+    lastTs = ts;
+    remaining = Math.max(0, remaining - delta);
+    paint();
+    if (remaining <= 0) {
+      finish();
+      return;
+    }
+    raf = requestAnimationFrame(step);
+  };
+  raf = requestAnimationFrame(step);
+}
+
+function finish() {
+  running = false;
+  $('toggle').textContent = 'Start';
+  cycles += 1;
+  $('cycle-label').textContent = `cycle complete · count ${cycles}`;
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification('Pomodoro complete', { body: getNotificationBody() });
+  }
+}
+
+function getNotificationBody() {
+  const active = document.querySelector('.modes button.active');
+  return active.dataset.min === '25' ? 'Time for a short break.' : 'Back to focus — nice work.';
+}
+
+document.querySelectorAll('.modes button').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.modes button').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    total = MINUTE * Number(btn.dataset.min);
+    color = btn.dataset.color;
+    remaining = total;
+    running = false;
+    cancelAnimationFrame(raf);
+    $('toggle').textContent = 'Start';
+    $('session').textContent = btn.textContent.split(' ')[0].toLowerCase();
+    paint();
+  });
+});
+
+$('toggle').addEventListener('click', () => {
+  running = !running;
+  $('toggle').textContent = running ? 'Pause' : 'Resume';
+  if (running) {
+    if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+    startLoop();
+  } else {
+    cancelAnimationFrame(raf);
+  }
+});
+
+$('reset').addEventListener('click', () => {
+  remaining = total;
+  running = false;
+  cancelAnimationFrame(raf);
+  $('toggle').textContent = 'Start';
+  paint();
+});
+
+$('skip').addEventListener('click', () => {
+  remaining = 0;
+  finish();
+  remaining = total;
+  paint();
+});
+
+paint();
+</script>
+</body>
+</html>
