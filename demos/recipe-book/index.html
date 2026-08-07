@@ -558,6 +558,7 @@ document.getElementById("form").addEventListener("submit",function(e){
 document.getElementById("reset").addEventListener("click",function(){
   try{ localStorage.removeItem(KEY); }catch(e){}
   REC=demo().map(norm);
+  save();
   document.getElementById("search").value="";
   document.getElementById("filter").value="All";
   document.getElementById("favsw").checked=false;

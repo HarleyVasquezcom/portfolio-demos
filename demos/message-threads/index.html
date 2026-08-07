@@ -236,7 +236,7 @@
     return raw;
   }
   function persistMeta() { safeSet(META_KEY, { order: order, active: activeId, drafts: drafts }); }
-  function persistAll() { persistMeta(); order.forEach(saveThread); }
+  function persistAll() { persistMeta(); order.forEach(function (id) { if (threads[id]) saveThread(threads[id]); }); }
 
   function seed() {
     var now = Date.now(), h = 3600e3, m = 60e3;
