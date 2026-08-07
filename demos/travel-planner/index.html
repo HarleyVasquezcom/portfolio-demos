@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Travel Planner - Brutalist Explorer</title>
+<style>
+:root { --bg:#FFFFFF; --ink:#111111; --muted:#6b6b6b; --amber:#FFC107; --amber-soft:#FFF3C4; --black:#000; }
+* { box-sizing:border-box; margin:0; padding:0; }
+html { color-scheme:light; }
+body { background:var(--bg); color:var(--ink); font-family:Helvetica,"Helvetica Neue",Arial,"Liberation Sans",sans-serif; font-weight:600; line-height:1.4; min-height:100vh; }
+::selection { background:var(--amber); color:var(--black); }
+.wrap { max-width:1260px; margin:0 auto; padding:20px 24px 56px; }
+header.top { display:flex; align-items:flex-end; justify-content:space-between; gap:18px; flex-wrap:wrap; padding:6px 0 18px; border-bottom:6px solid var(--black); }
+.brand { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.stamp { width:64px; height:64px; display:grid; place-items:center; background:var(--amber); border:3px solid var(--black); box-shadow:6px 6px 0 var(--black); font-weight:900; font-size:9px; text-align:center; line-height:1.12; transform:rotate(-3deg); letter-spacing:.5px; }
+h1 { font-size:clamp(26px,4.5vw,42px); font-weight:900; letter-spacing:-1.5px; line-height:.95; }
+h1 .thin { font-weight:300; }
+.tagbar { display:flex; gap:10px; flex-wrap:wrap; }
+.chip { font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; border:3px solid var(--black); padding:6px 10px; background:var(--bg); }
+.btn { font:inherit; font-weight:800; color:var(--ink); cursor:pointer; border:3px solid var(--black); background:var(--bg); box-shadow:6px 6px 0 var(--black); padding:12px 18px; border-radius:0; transition:transform .06s ease, box-shadow .06s ease; }
+.btn:hover { transform:translate(-2px,-2px); box-shadow:8px 8px 0 var(--black); }
+.btn:active { transform:translate(2px,2px); box-shadow:2px 2px 0 var(--black); }
+.btn.solid { background:var(--amber); }
+.btn.small { padding:8px 12px; box-shadow:3px 3px 0 var(--black); font-size:13px; }
+.btn.danger:active { background:#ffd0d0; }
+.btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .trip:focus-visible, .fill:focus-visible { outline:3px solid var(--black); outline-offset:2px; }
+.btn[disabled] { opacity:.45; cursor:not-allowed; transform:none !important; box-shadow:none !important; }
+main { display:grid; grid-template-columns:minmax(320px,380px) 1fr; gap:26px; margin-top:26px; align-items:start; }
+.panel { background:#fff; border:3px solid var(--black); box-shadow:6px 6px 0 var(--black); }
+.phead { display:flex; justify-content:space-between; align-items:center; gap:10px; border-bottom:3px solid var(--black); padding:12px 16px; font-weight:900; font-size:15px; letter-spacing:.4px; text-transform:uppercase; }
+.ps { padding:16px; }
+.searchbox { position:relative; margin-bottom:12px; }
+.searchbox input { width:100%; padding:11px 30px 11px 12px; border:3px solid var(--black); font:inherit; font-weight:700; background:var(--bg); }
+.searchbox .k { position:absolute; right:8px; top:50%; transform:translateY(-50%); border:2px solid var(--black); background:var(--amber); font-weight:900; font-size:11px; width:20px; height:20px; display:grid; place-items:center; }
+.filters { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+.filters label { font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.5px; }
+select { width:100%; margin-top:5px; padding:9px 6px; border:3px solid var(--black); font:inherit; font-weight:700; background:var(--bg); border-radius:0; }
+.field { margin-bottom:14px; }
+.field label { display:block; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+input[type=text], input[type=date], input[type=search], textarea { width:100%; padding:10px 12px; border:3px solid var(--black); font:inherit; font-weight:700; background:var(--bg); border-radius:0; }
+textarea { resize:vertical; min-height:96px; font-weight:600; }
+input::placeholder, textarea::placeholder { color:#9a9a9a; font-weight:600; }
+.trip { border:3px solid var(--black); margin-bottom:12px; padding:12px 14px; background:#fff; cursor:pointer; position:relative; border-radius:0; }
+.trip:hover { transform:translate(-2px,-2px); box-shadow:5px 5px 0 var(--black); }
+.trip.active { background:var(--amber-soft); box-shadow:6px 6px 0 var(--black); }
+.trip.active::before { content:""; position:absolute; left:-3px; top:-3px; width:12px; bottom:-3px; background:var(--black); }
+.trip .tname { font-weight:900; font-size:17px; letter-spacing:-.3px; }
+.trip .tmeta { font-size:12px; color:var(--muted); margin-top:4px; font-weight:700; }
+.trip .tplan { font-size:12px; margin-top:6px; opacity:.9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sechead { display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; text-align:left; font:inherit; font-weight:900; font-size:13px; text-transform:uppercase; letter-spacing:.6px; cursor:pointer; user-select:none; border:none; border-bottom:3px solid var(--black); background:var(--bg); padding:12px 16px; border-radius:0; }
+.sechead:hover { background:#f4f4f4; }
+.sechead .sign { font-size:16px; }
+.secbody { padding:16px; }
+.rowbtns { display:flex; gap:10px; flex-wrap:wrap; }
+fieldset { border:2px solid var(--black); padding:14px; border-radius:0; }
+legend { font-weight:900; text-transform:uppercase; font-size:11px; letter-spacing:.4px; padding:0 6px; }
+.checkgrid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.checkgroup { border:2px solid var(--black); }
+.cghead { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 12px; background:var(--ink); color:#fff; font-weight:900; font-size:12px; text-transform:uppercase; letter-spacing:.5px; }
+.cghead .n { background:var(--amber); color:var(--black); width:24px; height:24px; display:grid; place-items:center; font-size:12px; }
+.cglist { padding:6px; }
+.ckline { display:flex; align-items:center; gap:10px; padding:7px 6px; border-bottom:2px dashed #e2e2e2; }
+.ckline:last-child { border-bottom:none; }
+.ckline input[type=checkbox] { width:18px; height:18px; accent-color:var(--black); cursor:pointer; }
+.ckline label { flex:1; font-weight:700; font-size:14px; cursor:pointer; line-height:1.25; }
+.ckline.done label { text-decoration:line-through; color:var(--muted); }
+.ckline .rm { background:none; border:none; font-weight:900; cursor:pointer; font-size:16px; color:#bb0000; padding:0 2px; }
+.ckline .rm:hover { color:var(--black); }
+.addrow { display:flex; gap:8px; align-items:center; margin-top:14px; flex-wrap:wrap; }
+.addrow select { width:auto; margin-top:0; }
+.addrow input { flex:1; min-width:150px; }
+.tl-title { font-weight:900; font-size:14px; text-transform:uppercase; letter-spacing:.4px; margin-bottom:8px; display:flex; justify-content:space-between; }
+.tlwrap { display:flex; border-bottom:3px solid var(--black); padding-bottom:2px; margin-bottom:6px; }
+.tlwrap .m { flex:1; font-size:10px; font-weight:800; color:#8a8a8a; white-space:nowrap; overflow:hidden; }
+.tl-rows { margin-top:6px; }
+.bar { height:34px; margin:6px 0; position:relative; background:#ece6d6; border:1px solid var(--muted); }
+.bar .fill { position:absolute; top:0; bottom:0; background:var(--amber); border-right:3px solid var(--black); min-width:4px; display:flex; align-items:center; overflow:hidden; cursor:pointer; }
+.bar .fill.here { background:var(--ink); }
+.bar .lbl { font-size:11px; font-weight:900; padding:0 6px; color:var(--black); white-space:nowrap; }
+.bar .fill.here .lbl { color:#fff; }
+.empty { border:3px dashed var(--black); padding:28px; text-align:center; font-weight:800; color:var(--muted); }
+.hidden { display:none !important; }
+.muted { color:var(--muted); }
+.hint { font-size:12px; color:var(--muted); font-weight:600; }
+@media (max-width:900px) { main { grid-template-columns:1fr; } .checkgrid, .grid2 { grid-template-columns:1fr; } header.top { align-items:flex-start; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="stamp">TRAVEL<br />PLANNER<br />V1</div>
+      <div>
+        <h1>PLAN <span class="thin">THE</span> JOURNEY</h1>
+        <div class="tagbar"><span class="chip">trips</span><span class="chip">checklist</span><span class="chip">timeline</span></div>
+      </div>
+    </div>
+    <div class="tagbar">
+      <button class="btn solid" id="btnAdd">+ New trip</button>
+      <button class="btn" id="btnExport">Export JSON</button>
+      <button class="btn" id="btnImport">Import JSON</button>
+      <button class="btn" id="btnReset">Reset</button>
+      <input type="file" id="filePicker" accept="application/json" class="hidden" aria-hidden="true" tabindex="-1" />
+    </div>
+  </header>
+
+  <main>
+    <section class="panel" aria-label="Trip list">
+      <div class="phead"><span>EXPEDITION LOG</span><span id="count" class="muted"></span></div>
+      <div class="ps">
+        <div class="searchbox">
+          <input type="search" id="search" placeholder="Search name, country, city, plan..." aria-label="Search trips" />
+          <span class="k">/</span>
+        </div>
+        <div class="filters">
+          <label>Country <select id="fCountry" aria-label="Filter by country"></select></label>
+          <label>City <select id="fCity" aria-label="Filter by city"></select></label>
+        </div>
+        <div id="tripList"></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Trip detail">
+      <div class="phead"><span id="dTitle">[ Select a trip ]</span><span class="hint">auto-saved</span></div>
+      <button class="sechead" id="secDetails" aria-expanded="true">Details <span class="sign">&minus;</span></button>
+      <div class="secbody" id="sbDetails">
+        <div class="grid2">
+          <div class="field"><label for="fName">Destination</label><input type="text" id="fName" /></div>
+          <div class="field"><label for="fCountryField">Country</label><input type="text" id="fCountryField" list="countrySuggest" /></div>
+          <div class="field"><label for="fCityField">City</label><input type="text" id="fCityField" /></div>
+          <div class="field"><label for="fStart">From</label><input type="date" id="fStart" /></div>
+          <div class="field"><label for="fEnd">To</label><input type="date" id="fEnd" /></div>
+        </div>
+        <div class="field"><label for="fPlan">The Plan</label><textarea id="fPlan" placeholder="Accommodation, budget, route, notes..."></textarea></div>
+        <div class="rowbtns">
+          <button class="btn solid" id="btnUpdate">Update trip</button>
+          <button class="btn danger" id="btnDelete">Delete trip</button>
+        </div>
+      </div>
+
+      <button class="sechead" id="secCk" aria-expanded="true">Prepare Checklist <span class="sign">&minus;</span></button>
+      <div class="secbody" id="sbCk">
+        <div class="checkgrid" id="ckGrid"></div>
+        <div class="addrow">
+          <label for="ckGroup" class="hint" style="font-weight:900;text-transform:uppercase;">Group</label>
+          <select id="ckGroup"></select>
+          <input type="text" id="ckAddText" placeholder="Add item (passport, drone, visa...)" aria-label="New checklist item" style="flex:1;min-width:160px;" />
+          <button class="btn solid small" id="btnCkAdd">Add</button>
+        </div>
+      </div>
+
+      <button class="sechead" id="secTl" aria-expanded="true">Comparative Timeline <span class="sign">&minus;</span></button>
+      <div class="secbody" id="sbTl"></div>
+    </section>
+  </main>
+</div>
+<datalist id="countrySuggest"></datalist>
+
+<script>
+"use strict";
+var KEY = "travel-planner-v1";
+var GROUPS = ["Documentation", "Packing", "Booking"];
+var state = { trips: [], selected: null };
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function pad(n) { return (n < 10 ? "0" : "") + n; }
+function today() { var d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+function shiftMonth(off) { var d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + off); d.setDate(10); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+
+function freshTrip() { return { id: uid(), name: "", country: "", city: "", start: "", end: "", plan: "", created: Date.now(), ck: {} }; }
+
+function demoData() {
+  function t(o) {
+    var x = freshTrip();
+    x.name = o.name; x.country = o.country; x.city = o.city;
+    x.start = shiftMonth(o.s); x.end = o.id ? shiftMonth(o.s + 2) : shiftMonth(o.e);
+    x.plan = o.plan;
+    x.ck.Documentation = o.doc.map(function (v) { return { t: v, done: false }; });
+    x.ck.Packing = o.pack.map(function (v) { return { t: v, done: false }; });
+    x.ck.Booking = o.book.map(function (v) { return { t: v, done: false }; });
+    return x;
+  }
+  state.trips = [
+    t({ name: "Inca Trail Trek", country: "Peru", city: "Cusco", s: 1, id: true, plan: "4-day trek. Acclimatize in Cusco first. Budget USD 1400.", doc: ["Passport", "Travel insurance"], pack: ["Hiking boots", "Rain jacket", "Mosquito spray"], book: ["Inca Trail permit", "Hostel in Cusco"] }),
+    t({ name: "City Break", country: "Spain", city: "Barcelona", s: 3, id: true, plan: "Architecture, beach walks, food tour. Budget EUR 900.", doc: ["ID card", "EU health card"], pack: ["Comfortable shoes", "Camera"], book: ["Hotel", "Sagrada tickets"] }),
+    t({ name: "Desert Road Trip", country: "Morocco", city: "Marrakesh", s: 5, id: true, plan: "Drive to Merzouga. Camel camp and stargazing.", doc: ["Passport", "Driving permit"], pack: ["Warm layers", "Sun hat"], book: ["4x4 rental", "Desert camp"] })
+  ];
+  state.selected = state.trips[0].id;
+}
+
+function ensureT(t) { if (!t.ck) t.ck = {}; GROUPS.forEach(function (g) { if (!Array.isArray(t.ck[g])) t.ck[g] = []; }); }
+
+function persist() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (err) { console.warn("save failed", err); } }
+function load() {
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (raw !== null) {
+      var p = JSON.parse(raw);
+      if (p && Array.isArray(p.trips)) {
+        state = p; state.trips.forEach(ensureT);
+        state.selected = state.trips.some(function (x) { return x.id === state.selected; }) ? state.selected : (state.trips[0] ? state.trips[0].id : null);
+        return;
+      }
+    }
+  } catch (err) { console.warn("load failed", err); }
+  demoData();
+  persist();
+}
+
+function $(id) { return document.getElementById(id); }
+function cur() { for (var i = 0; i < state.trips.length; i++) if (state.trips[i].id === state.selected) return state.trips[i]; return null; }
+
+/* date / month tools */
+function mkey(iso) {
+  if (!iso) return null;
+  var p = iso.split("-");
+  if (p.length < 2) return null;
+  var y = +p[0]; if (!y) return null;
+  return y * 12 + (+p[1] - 1);
+}
+function lastMonth(t) {
+  var e = mkey(t.end);
+  if (e === null) { var s = mkey(t.start); return s === null ? 0 : s; }
+  return e;
+}
+function monthName(n) { return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][n - 1]; }
+function fmtDate(iso) {
+  if (!iso) return "";
+  var p = iso.split("-");
+  if (p.length !== 3) return iso;
+  return monthName(+p[1]) + " " + (+p[2]) + ", " + p[0];
+}
+
+/* filter */
+function query() { return $("search").value.toLowerCase().trim(); }
+function matches(t) {
+  var s = query();
+  if (s) {
+    var hay = (t.name + " " + t.country + " " + t.city + " " + t.plan).toLowerCase();
+    if (hay.indexOf(s) === -1) return false;
+  }
+  if ($("fCountry").value && t.country !== $("fCountry").value) return false;
+  if ($("fCity").value && t.city !== $("fCity").value) return false;
+  return true;
+}
+function byStart(a, b) {
+  var as = mkey(a.start) || 1e9, bs = mkey(b.start) || 1e9;
+  if (as !== bs) return as - bs;
+  return (a.name || "").localeCompare(b.name || "");
+}
+
+/* escape */
+function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
+
+/* --------- main render --------- */
+function render() {
+  var countries = {}, cities = {};
+  state.trips.forEach(function (t) { if (t.country) countries[t.country] = 1; if (t.city) cities[t.city] = 1; });
+  paintSelect($("fCountry"), countries);
+  paintSelect($("fCity"), cities);
+  paintList();
+  paintDetail();
+}
+function paintSelect(sel, map) {
+  var keep = sel.value;
+  sel.innerHTML = "";
+  var o = document.createElement("option"); o.value = ""; o.textContent = "All"; sel.appendChild(o);
+  Object.keys(map).sort().forEach(function (k) { var x = document.createElement("option"); x.value = k; x.textContent = k; sel.appendChild(x); });
+  if (keep && map[keep]) sel.value = keep;
+}
+
+/* list */
+function paintList() {
+  var el = $("tripList");
+  var list = state.trips.filter(matches).sort(byStart);
+  $("count").textContent = list.length + (list.length === 1 ? " trip" : " trips");
+  el.innerHTML = "";
+  if (!list.length) {
+    var e = document.createElement("div"); e.className = "empty";
+    e.textContent = state.trips.length ? "No trips match the current filters." : "No trips yet. Start with + New trip";
+    el.appendChild(e); return;
+  }
+  list.forEach(function (t) {
+    var div = document.createElement("div");
+    div.className = "trip" + (t.id === state.selected ? " active" : "");
+    div.id = "trip-" + t.id;
+    div.setAttribute("role", "button"); div.tabIndex = 0;
+    div.setAttribute("aria-pressed", String(t.id === state.selected));
+    var n = document.createElement("div"); n.className = "tname"; n.textContent = t.name || "Untitled";
+    var meta = document.createElement("div"); meta.className = "tmeta";
+    var geo = (t.country || "") + (t.country && t.city ? " / " : "") + (t.city || "");
+    if (t.start) geo += (geo ? "  |  " : "") + fmtDate(t.start) + (t.end ? " - " + fmtDate(t.end) : "");
+    meta.textContent = geo;
+    div.appendChild(n); div.appendChild(meta);
+    if (t.plan) { var p = document.createElement("div"); p.className = "tplan"; p.textContent = t.plan; div.appendChild(p); }
+    div.addEventListener("click", function () { pickTrip(t.id); });
+    div.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); pickTrip(t.id); } });
+    el.appendChild(div);
+  });
+}
+function pickTrip(id) { state.selected = id; persist(); paintList(); paintDetail(); var n = $("trip-" + id); if (n) n.scrollIntoView({ block: "nearest" }); }
+
+/* --------- detail --------- */
+function paintDetail() {
+  var t = cur();
+  if (!t) {
+    $("dTitle").textContent = "[ Select a trip ]";
+    $("fName").value = ""; $("fCountryField").value = ""; $("fCityField").value = "";
+    $("fStart").value = ""; $("fEnd").value = ""; $("fPlan").value = "";
+    paintDatalist(""); paintCheck(); paintTimeline(); return;
+  }
+  $("dTitle").textContent = t.name || "Untitled";
+  $("fName").value = t.name || "";
+  $("fCountryField").value = t.country || "";
+  $("fCityField").value = t.city || "";
+  $("fStart").value = t.start || "";
+  $("fEnd").value = t.end || "";
+  $("fPlan").value = t.plan || "";
+  paintDatalist();
+  paintCheck(t);
+  paintTimeline();
+}
+function paintDatalist() {
+  var seen = {}, html = "";
+  state.trips.forEach(function (t) { if (t.country && !seen[t.country]) { seen[t.country] = 1; html += "<option value=\"" + esc(t.country) + "\"/>"; } });
+  $("countrySuggest").innerHTML = html;
+}
+
+/* checklist */
+function paintCheck(t) {
+  var box = $("ckGrid");
+  box.innerHTML = "";
+  var gsel = $("ckGroup"); gsel.innerHTML = "";
+  GROUPS.forEach(function (g) { var o = document.createElement("option"); o.value = g; o.textContent = g; gsel.appendChild(o); });
+  if (!t) { var e = document.createElement("div"); e.className = "empty"; e.textContent = "Select a trip to manage its checklist."; box.appendChild(e); return; }
+  GROUPS.forEach(function (g) {
+    var col = document.createElement("div"); col.className = "checkgroup";
+    var head = document.createElement("div"); head.className = "cghead";
+    var hl = document.createElement("span"); hl.textContent = g;
+    var done = t.ck[g].filter(function (i) { return i.done; }).length;
+    var n = document.createElement("span"); n.className = "n"; n.textContent = done + "/" + t.ck[g].length;
+    head.appendChild(hl); head.appendChild(n); col.appendChild(head);
+    var body = document.createElement("div"); body.className = "cglist";
+    t.ck[g].forEach(function (item, i) {
+      var row = document.createElement("div"); row.className = "ckline" + (item.done ? " done" : "");
+      var cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = !!item.done;
+      cb.id = "ck" + g + i; cb.setAttribute("aria-label", item.t || "item");
+      cb.addEventListener("change", function () { item.done = cb.checked; persist(); paintCheck(cur()); paintCounts(); });
+      var lb = document.createElement("label"); lb.htmlFor = cb.id; lb.textContent = item.t || "(blank)";
+      var rm = document.createElement("button"); rm.className = "rm"; rm.textContent = "x";
+      rm.setAttribute("aria-label", "Remove " + (item.t || "item"));
+      rm.addEventListener("click", function () { t.ck[g].splice(i, 1); persist(); paintCheck(cur()); });
+      row.appendChild(cb); row.appendChild(lb); row.appendChild(rm); body.appendChild(row);
+    });
+    if (!t.ck[g].length) { var eh = document.createElement("div"); eh.className = "hint"; eh.textContent = "Empty group."; body.appendChild(eh); }
+    col.appendChild(body); box.appendChild(col);
+  });
+}
+function paintCounts() {
+  var t = cur();
+  if (!t) return;
+  var cols = $("ckGrid").querySelectorAll(".checkgroup");
+  GROUPS.forEach(function (g, gi) {
+    var col = cols[gi]; if (!col) return;
+    var done = t.ck[g].filter(function (i) { return i.done; }).length;
+    col.querySelector(".n").textContent = done + "/" + t.ck[g].length;
+  });
+}
+function addCkItem() {
+  var t = cur(); if (!t) return;
+  var v = $("ckAddText").value.trim(); if (!v) return;
+  var g = $("ckGroup").value;
+  t.ck[g].push({ t: v, done: false });
+  $("ckAddText").value = "";
+  persist(); paintCheck(t);
+}
+
+/* --------- timeline --------- */
+function paintTimeline() {
+  var box = $("sbTl");
+  box.innerHTML = "";
+  var trips = state.trips.filter(function (t2) { return mkey(t2.start) !== null; });
+  if (!trips.length) {
+    var e = document.createElement("div"); e.className = "empty";
+    e.textContent = "Give trips a start date to see them on the timeline.";
+    box.appendChild(e); return;
+  }
+  trips.sort(byStart);
+  var min = 1e9, max = -1e9;
+  trips.forEach(function (t2) { var s = mkey(t2.start); var e = lastMonth(t2); if (s < min) min = s; if (e > max) max = e; });
+  var span = Math.max(1, max - min + 1);
+  var title = document.createElement("div"); title.className = "tl-title";
+  title.innerHTML = "<span>Gantt view - " + span + " month window</span><span class=\"muted\">click a bar</span>";
+  box.appendChild(title);
+  var anyTrip = document.createElement("div"); anyTrip.className = "tlwrap"; anyTrip.setAttribute("aria-hidden", "true");
+  for (var i = 0; i < span; i++) {
+    var ym = min + i, y = Math.floor(ym / 12), m = ym % 12 + 1;
+    var c = document.createElement("div"); c.className = "m";
+    c.textContent = (m === 1 || i === 0 ? y + " " : "") + monthName(m);
+    anyTrip.appendChild(c);
+  }
+  box.appendChild(anyTrip);
+  var rows = document.createElement("div"); rows.className = "tl-rows";
+  trips.forEach(function (t2) {
+    var s = mkey(t2.start), e = lastMonth(t2);
+    var l = (s - min) / span * 100;
+    var w = Math.max(1.5, (e - s + 1) / span * 100);
+    var b = document.createElement("div"); b.className = "bar";
+    var f = document.createElement("div"); f.className = "fill" + (t2.id === state.selected ? " here" : "");
+    f.style.left = l + "%"; f.style.width = w + "%";
+    var lb = document.createElement("span"); lb.className = "lbl"; lb.textContent = t2.name || "untitled";
+    f.appendChild(lb);
+    f.title = (t2.name || "untitled") + ": " + (t2.start || "?") + " - " + (t2.end || "");
+    f.setAttribute("role", "button"); f.tabIndex = 0;
+    f.addEventListener("click", function (ev) { ev.stopPropagation(); pickTrip(t2.id); });
+    f.addEventListener("keydown", function (kv) { if (kv.key === "Enter") { kv.preventDefault(); pickTrip(t2.id); } });
+    b.appendChild(f); rows.appendChild(b);
+  });
+  box.appendChild(rows);
+}
+
+/* --------- CRUD listeners --------- */
+$("btnAdd").addEventListener("click", function () {
+  var t = freshTrip(); t.name = "New trip"; t.start = today();
+  ensureT(t);
+  state.trips.push(t); state.selected = t.id; persist(); render();
+  $("fName").focus();
+});
+$("btnUpdate").addEventListener("click", function () {
+  var t = cur(); if (!t) return;
+  var name = $("fName").value.trim();
+  if (name) t.name = name;
+  t.country = $("fCountryField").value.trim();
+  t.city = $("fCityField").value.trim();
+  t.start = $("fStart").value;
+  t.end = $("fEnd").value;
+  t.plan = $("fPlan").value;
+  persist(); render();
+});
+$("btnDelete").addEventListener("click", function () {
+  var t = cur(); if (!t) return;
+  if (!window.confirm("Delete trip \"" + (t.name || "untitled") + "\"?")) return;
+  state.trips = state.trips.filter(function (x) { return x.id !== t.id; });
+  state.selected = state.trips[0] ? state.trips[0].id : null;
+  persist(); render();
+});
+$("btnCkAdd").addEventListener("click", addCkItem);
+$("ckAddText").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); addCkItem(); } });
+
+/* search + filters */
+$("search").addEventListener("input", paintList);
+$("fCountry").addEventListener("change", paintList);
+$("fCity").addEventListener("change", paintList);
+
+/* accordions */
+function accordion(headId, bodyId) {
+  var head = $(headId), body = $(bodyId);
+  head.addEventListener("click", function () {
+    var closed = body.classList.toggle("hidden");
+    head.setAttribute("aria-expanded", String(!closed));
+    head.querySelector(".sign").textContent = closed ? "+" : "-";
+  });
+}
+accordion("secDetails", "sbDetails");
+accordion("secCk", "sbCk");
+accordion("secTl", "sbTl");
+
+/* export / import / reset */
+$("btnExport").addEventListener("click", function () {
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(state, null, 2)], { type: "application/json" }));
+  a.download = "travel-planner-v1.json";
+  a.click();
+});
+$("btnImport").addEventListener("click", function () { $("filePicker").click(); });
+$("filePicker").addEventListener("change", function () {
+  var f = $("filePicker").files[0]; if (!f) return;
+  var r = new FileReader();
+  r.onload = function () {
+    try {
+      var p = JSON.parse(r.result);
+      if (!p || !Array.isArray(p.trips)) throw new Error("file needs a trips array");
+      p.trips.forEach(function (t2) {
+        if (!t2.id) t2.id = uid();
+        if (!t2.ck) t2.ck = {};
+        GROUPS.forEach(function (g) { if (!Array.isArray(t2.ck[g])) t2.ck[g] = []; });
+      });
+      state = p;
+      state.selected = p.trips[0] ? p.trips[0].id : null;
+      persist(); render();
+    } catch (err) { window.alert("Import failed: " + err.message); }
+  };
+  r.readAsText(f);
+  $("filePicker").value = "";
+});
+$("btnReset").addEventListener("click", function () {
+  if (!window.confirm("Delete all trips and reload demo data?")) return;
+  demoData(); persist(); render();
+});
+
+/* --------- boot --------- */
+load();
+render();
+</script>
+</body>
+</html>

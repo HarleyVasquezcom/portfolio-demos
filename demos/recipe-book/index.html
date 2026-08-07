@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Recipe Book - Rustic Cozy Cookbook</title>
+<style>
+  :root {
+    --cream:#FBF6EE; --card:#FFFDF7; --wood:#F1E6D3;
+    --coffee:#B5651D; --terracotta:#C4633A; --dark:#4A332B;
+    --muted:#8A7A6A; --line:#E6D9C2;
+    --shadow:0 6px 16px rgba(74,51,43,.08);
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    min-height:100vh; color:var(--dark);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background-color:#FBF6EE;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(181,101,29,.045) 0 2px, transparent 2px 5px),
+      repeating-linear-gradient(90deg, rgba(181,101,29,.05) 0 1px, transparent 1px 3px),
+      radial-gradient(rgba(74,51,43,.05) 1px, transparent 1px);
+    background-size:auto, auto, 13px 13px, auto;
+    padding-bottom:80px;
+  }
+  .wrap { max-width:1000px; margin:0 auto; padding:0 20px; }
+  header { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding:30px 0 16px; }
+  .logo h1 { font-family:Georgia,'Times New Roman',serif; font-size:32px; font-weight:700; color:var(--coffee); letter-spacing:.5px; }
+  .logo h1 span { color:var(--terracotta); }
+  .logo p { color:var(--muted); font-size:13px; font-style:italic; margin-top:3px; }
+  .stats { display:flex; gap:10px; }
+  .chip { background:#fff; border:1px solid var(--line); border-radius:999px; padding:8px 14px; font-size:13px; color:var(--dark); box-shadow:var(--shadow); }
+  .chip b { color:var(--coffee); font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  .controls { display:flex; flex-wrap:wrap; gap:10px; align-items:center; padding:4px 0 20px; }
+  input.search, select.filter {
+    background:#fff; border:1px solid var(--line); border-radius:12px; padding:11px 14px;
+    font:inherit; font-size:14px; color:var(--dark); outline:none; box-shadow:var(--shadow);
+  }
+  input.search { flex:1 1 200px; }
+  input.search::placeholder { color:#BBA; }
+  select.filter { cursor:pointer; }
+  input.search:focus, select.filter:focus { border-color:var(--coffee); }
+  :focus-visible { outline:2px solid var(--terracotta); outline-offset:2px; }
+  .btn {
+    background:var(--coffee); color:#fff; border:none; border-radius:12px; padding:11px 16px;
+    font:inherit; font-size:14px; font-weight:600; cursor:pointer; transition:transform .12s, background .15s;
+    box-shadow:var(--shadow); display:inline-flex; align-items:center; gap:6px;
+  }
+  .btn:hover { background:#9A4E10; transform:translateY(-1px); }
+  .btn.ghost { background:#fff; color:var(--coffee); border:1px solid var(--line); }
+  .btn.ghost:hover { background:var(--wood); }
+  label.switchbox { display:inline-flex; align-items:center; gap:7px; font-size:13px; color:var(--dark); cursor:pointer; }
+  label.switchbox input { accent-color:var(--terracotta); width:15px; height:15px; }
+
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:20px; padding:6px 0; }
+  .card {
+    background:var(--card); border:1px solid var(--line); border-radius:18px; overflow:hidden;
+    box-shadow:var(--shadow); display:flex; flex-direction:column; cursor:pointer;
+    transition:transform .14s, box-shadow .14s; position:relative; text-align:left;
+  }
+  .card:hover { transform:translateY(-3px); box-shadow:0 12px 26px rgba(74,51,43,.14); }
+  .cover {
+    height:96px; display:flex; align-items:center; justify-content:center; font-size:42px;
+    color:#FFF7EC; text-shadow:0 2px 4px rgba(0,0,0,.15);
+  }
+  .cover.breakfast{background:linear-gradient(135deg,#EDC26B,#C7572F);}
+  .cover.lunch{background:linear-gradient(135deg,#86A96F,#5F8A4F);}
+  .cover.dinner{background:linear-gradient(135deg,#C08552,#7A3B10);}
+  .cover.dessert{background:linear-gradient(135deg,#E09A9A,#BC5F78);}
+  .cover.drinks{background:linear-gradient(135deg,#87AAB8,#477282);}
+  .fav {
+    position:absolute; top:10px; right:10px; width:34px; height:34px; border-radius:50%;
+    background:rgba(255,247,236,.94); border:1px solid var(--line); color:#B9A69A;
+    font-size:17px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .fav:hover { color:#E04550; }
+  .fav.on { color:#E04550; }
+  .card .info { padding:14px 16px 16px; display:flex; flex-direction:column; gap:7px; flex:1; }
+  .catpilltitle { align-self:flex-start; font-size:11px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:#fff; padding:3px 10px; border-radius:999px; }
+  .card h3 { font-family:Georgia,'Times New Roman',serif; font-size:18px; color:var(--dark); line-height:1.25; }
+  .card .desc { color:var(--muted); font-size:13px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .meta { margin-top:4px; display:flex; flex-wrap:wrap; gap:6px 12px; font-size:12px; color:var(--muted); }
+  .meta .ing { color:var(--coffee); font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  .card .foot { display:flex; gap:8px; padding:0 16px 16px; margin-top:auto; }
+  .card .foot .btn { flex:1; justify-content:center; font-size:13px; padding:9px 8px; }
+  .empty { grid-column:1/-1; text-align:center; color:var(--muted); padding:60px 20px; font-size:15px; }
+
+  .modal {
+    position:fixed; inset:0; background:rgba(74,51,43,.42); z-index:50;
+    display:flex; align-items:flex-start; justify-content:center; padding:24px 14px; overflow:auto;
+    visibility:hidden; opacity:0; transition:opacity .18s;
+  }
+  .modal.open { visibility:visible; opacity:1; }
+  .sheet {
+    background:#FFFDF7; border-radius:20px; max-width:640px; width:100%; margin:auto;
+    box-shadow:0 24px 60px rgba(0,0,0,.25); border:1px solid var(--line);
+    animation:pop .18s ease;
+  }
+  @keyframes pop { from{transform:translateY(14px);opacity:0;} to{transform:none;opacity:1;} }
+  .sheet-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:20px 24px; border-bottom:1px solid var(--line); }
+  .sheet-head h2 { font-family:Georgia,'Times New Roman',serif; font-size:22px; color:var(--coffee); line-height:1.2; }
+  .x { background:var(--wood); border:none; color:var(--dark); width:34px; height:34px; border-radius:50%; font-size:20px; cursor:pointer; line-height:1; flex-shrink:0; }
+  .x:hover { background:#E4D4B8; }
+  .sheet-body { padding:18px 22px 22px; }
+  .pill { background:var(--wood); border:1px solid var(--line); border-radius:12px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center; gap:12px 20px; flex-wrap:wrap; margin-bottom:16px; }
+  .pill .lbl { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.4px; margin-bottom:3px; }
+  .catpill { font-weight:700; color:var(--coffee); text-transform:uppercase; font-size:12px; letter-spacing:.4px; }
+  .servctl { display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted); }
+  .servctl input { accent-color:var(--coffee); width:120px; }
+  .servctl .num { font-family:ui-monospace,monospace; color:var(--coffee); font-weight:700; min-width:22px; text-align:right; }
+  .tabs { display:flex; gap:6px; border-bottom:1px solid var(--line); margin-bottom:16px; }
+  .tab { padding:9px 18px; background:transparent; border:none; cursor:pointer; font:inherit; font-size:14px; font-weight:600; color:var(--muted); border-bottom:2px solid transparent; }
+  .tab.active { color:var(--coffee); border-bottom-color:var(--coffee); }
+  .tab-box { display:none; }
+  .tab-box.active { display:block; }
+  ul.list { list-style:none; display:flex; flex-direction:column; gap:9px; }
+  ul.list li { display:flex; gap:11px; align-items:flex-start; background:var(--wood); border:1px solid var(--line); border-radius:12px; padding:11px 13px; font-size:14px; line-height:1.45; }
+  .ingcb { width:18px; height:18px; accent-color:var(--coffee); margin-top:2px; cursor:pointer; flex-shrink:0; }
+  li.done .ingtxt { text-decoration:line-through; color:var(--muted); }
+  .ingtxt .q { font-family:ui-monospace,monospace; color:var(--coffee); font-weight:700; margin-right:5px; white-space:nowrap; }
+  .ingtxt .u { color:var(--coffee); margin-right:4px; }
+  ol.stepslist { list-style:none; display:flex; flex-direction:column; gap:9px; counter-reset:step; }
+  ol.stepslist li { display:flex; gap:12px; align-items:flex-start; counter-increment:step; background:var(--wood); border:1px solid var(--line); border-radius:12px; padding:11px 13px; font-size:14px; line-height:1.5; }
+  ol.stepslist li::before { content:counter(step); font-family:Georgia,serif; font-weight:700; color:var(--coffee); font-size:17px; min-width:22px; }
+  li.checked .stepsv { text-decoration:line-through; color:var(--muted); }
+  .hint { color:var(--muted); font-size:12px; font-style:italic; margin-top:14px; }
+
+  .frow { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:600px){ .frow{ grid-template-columns:1fr; } }
+  .field { margin-bottom:14px; }
+  .field label { display:block; font-size:12px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+  .field input, .field textarea, .field select {
+    width:100%; background:#fff; border:1px solid var(--line); border-radius:11px; padding:11px 13px;
+    font:inherit; font-size:14px; color:var(--dark); outline:none;
+  }
+  .field textarea { resize:vertical; min-height:60px; }
+  .field input:focus, .field textarea:focus, .field select:focus { border-color:var(--coffee); }
+  .sub { font-size:12px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--dark); margin:6px 0 8px; }
+  .ing-row { display:grid; grid-template-columns:96px 1fr 34px; gap:8px; margin-bottom:8px; }
+  .ing-row input {
+    background:#fff; border:1px solid var(--line); border-radius:9px; padding:9px 10px;
+    font:inherit; font-size:14px;
+  }
+  .ing-row .iq { font-family:ui-monospace,monospace; }
+  .step-row { display:grid; grid-template-columns:24px 1fr; gap:12px; align-items:center; margin-bottom:8px; }
+  .step-row .n { text-align:center; font-weight:700; color:var(--coffee); font-family:Georgia,serif; }
+  .step-row textarea { background:#fff; border:1px solid var(--line); border-radius:9px; padding:9px 12px; font:inherit; font-size:14px; font-family:inherit; resize:vertical; min-height:40px; width:100%; }
+  .del { background:transparent; border:none; color:#C0392B; font-size:18px; cursor:pointer; border-radius:8px; width:32px; height:32px; }
+  .del:hover { background:#F5E6E0; }
+  .addline { display:inline-flex; gap:6px; align-items:center; background:none; border:none; color:var(--coffee); font:inherit; font-size:13px; font-weight:700; cursor:pointer; padding:4px 0; margin-top:2px; }
+  .addline:hover { text-decoration:underline; }
+  .factions { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">
+        <h1><span>recipe</span> book</h1>
+        <p>A cozy, rustic pantry for everyday cooking.</p>
+      </div>
+      <div class="stats">
+        <span class="chip">recipes <b id="count">0</b></span>
+        <span class="chip">favorites <b id="favcount">0</b></span>
+      </div>
+    </header>
+
+    <div class="controls">
+      <input type="search" class="search" id="search" placeholder="Search recipes..." aria-label="Search recipes" autocomplete="off" />
+      <select id="filter" aria-label="Filter by category">
+        <option value="All">All categories</option>
+        <option>Breakfast</option>
+        <option>Lunch</option>
+        <option>Dinner</option>
+        <option>Dessert</option>
+        <option>Drinks</option>
+      </select>
+      <label class="switchbox"><input type="checkbox" id="favsw" /> Favorites only</label>
+      <button class="btn ghost" id="reset">Reset demo</button>
+      <button class="btn" id="addBtn">+ New recipe</button>
+    </div>
+
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="modal" id="view" role="dialog" aria-modal="true" aria-labelledby="viewTitle">
+    <div class="sheet">
+      <div class="sheet-head">
+        <h2 id="viewTitle"></h2>
+        <button class="x" id="viewX" aria-label="Close">&#215;</button>
+      </div>
+      <div class="sheet-body">
+        <div class="pill">
+          <span>
+            <div class="lbl">category</div>
+            <span class="catpill" id="viewCat"></span>
+          </span>
+          <span class="servctl">
+            <span>servings</span>
+            <input type="range" id="sv" min="1" max="12" step="1" value="1" aria-label="Scale servings" />
+            <span class="num" id="svnum">1</span>
+          </span>
+        </div>
+        <div class="tabs" role="tablist">
+          <button class="tab active" id="tabIng" role="tab" aria-selected="true">Ingredients</button>
+          <button class="tab" id="tabStep" role="tab" aria-selected="false">Steps</button>
+        </div>
+        <div id="ingPanel" class="tab-box active">
+          <ul class="list" id="ingList"></ul>
+        </div>
+        <div id="stepPanel" class="tab-box">
+          <ol class="stepslist" id="stepList"></ol>
+        </div>
+        <p class="hint">Scale servings to rescale ingredients. Check off items as you go.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="edit" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+    <div class="sheet">
+      <div class="sheet-head">
+        <h2 id="editTitle">New recipe</h2>
+        <button class="x" id="editX" aria-label="Close">&#215;</button>
+      </div>
+      <div class="sheet-body">
+        <form id="form">
+          <div class="field">
+            <label for="fName">Name</label>
+            <input id="fName" required />
+          </div>
+          <div class="frow">
+            <div class="field">
+              <label for="fTime">Prep time</label>
+              <input id="fTime" placeholder="e.g. 25 min" />
+            </div>
+            <div class="field">
+              <label for="fServ">Servings</label>
+              <input id="fServ" type="number" min="1" max="20" value="2" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="fCat">Category</label>
+            <select id="fCat">
+              <option>Breakfast</option>
+              <option>Lunch</option>
+              <option selected>Dinner</option>
+              <option>Dessert</option>
+              <option>Drinks</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="fDesc">Description</label>
+            <textarea id="fDesc" placeholder="A short, mouth-watering blurb"></textarea>
+          </div>
+
+          <div class="sub">Ingredients</div>
+          <div id="ingRows"></div>
+          <button type="button" class="addline" id="addIng">+ Add ingredient</button>
+
+          <div class="sub" style="margin-top:18px;">Steps</div>
+          <div id="stepRows"></div>
+          <button type="button" class="addline" id="addStep">+ Add step</button>
+
+          <div class="factions">
+            <button type="button" class="btn ghost" id="cancelEdit">Cancel</button>
+            <button type="submit" class="btn">Save recipe</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+<script>
+"use strict";
+var KEY="recipe-book-v1";
+var CATS=["Breakfast","Lunch","Dinner","Dessert","Drinks"];
+var EMOJI={"Breakfast":"\uD83E\uDD53","Lunch":"\uD83E\uDD57","Dinner":"\uD83C\uDF72","Dessert":"\uD83C\uDF70","Drinks":"\uD83C\uDF79"};
+var REC=[];
+var editingId=null;
+
+function demo(){
+  return [
+    {id:"m1",name:"Grandma's Morning Oats",time:"15 min",servings:2,cat:"Breakfast",fav:true,desc:"Toasty oats folded with honey, pecans and a slow-caramelized banana.",
+      ingredients:[["1 cup","rolled oats"],["2 cup","whole milk"],["1","ripe banana, sliced"],["2 tbsp","honey"],["2 tbsp","toasted pecans"]],
+      steps:["Simmer oats and milk over medium-low for 6 minutes, stirring occasionally.","Fold in slices of banana and a drizzle of honey.","Top with toasted pecans and serve warm."]},
+    {name:"Harvest Lentil Soup",time:"40 min",servings:4,cat:"Lunch",fav:false,desc:"A hearty bowl of green lentils, carrots and herbs that smells like a Sunday kitchen.",
+      ingredients:[["1 cup","dried green lentils"],["4 cup","vegetable broth"],["2","carrots, diced"],["1","yellow onion, chopped"],["2 tsp","thyme"],["1","bay leaf"]],
+      steps:["Sweat the onions and carrots in a splash of olive oil until soft.","Add lentils, broth, thyme and the bay leaf, then simmer 30 minutes.","Season with salt and pepper, remove the bay leaf and serve."]},
+    {name:"Terracotta Roast Bird",time:"1h 10m",servings:4,cat:"Dinner",fav:false,desc:"A golden herb-butter roast chicken set over a bed of carrots and thyme.",
+      ingredients:[["1","whole chicken"],["3 tbsp","softened butter"],["4 sprig","thyme"],["3","carrots, halved"],["2 tbsp","olive oil"],["1 tsp","salt"]],
+      steps:["Pat the bird dry, then rub all over with the herb butter and salt.","Roast at 425F over the carrot bed for 55 minutes.","Rest 10 minutes before carving and pouring the juices over."]},
+    {name:"Velvet Hot Cocoa",time:"5 min",servings:2,cat:"Drinks",fav:true,desc:"A silken cocoa made with melted dark chocolate and a whisper of salt.",
+      ingredients:[["2 cup","whole milk"],["120 g","dark chocolate, chopped"],["1 tbsp","brown sugar"],["1 pinch","sea salt"]],
+      steps:["Warm the milk until steaming.","Whisk in the chocolate and sugar until silky.","Finish with sea salt and pour tall."]},
+    {name:"Strawberry Fool",time:"15 min",servings:3,cat:"Dessert",fav:false,desc:"Fresh strawberries folded into softly whipped cream \u2013 bright and quick.",
+      ingredients:[["300 g","fresh strawberries"],["2 tbsp","sugar"],["1 cup","heavy cream"]],
+      steps:["Mash the berries with sugar and let them rest.","Whip the cream to soft peaks.","Fold it together gently, then chill for a few minutes."]}
+  ];
+}
+
+function norm(r){
+  return {
+    id:r.id||"r"+Math.random().toString(36).slice(2,9),
+    name:r.name||"Untitled",
+    time:r.time||"",
+    servings:+r.servings||2,
+    cat:CATS.indexOf(r.cat)>=0?r.cat:"Lunch",
+    fav:!!r.fav,
+    desc:r.desc||"",
+    ingredients:(r.ingredients||[]).map(function(x){ return (Array.isArray(x)?x:[String(x[0]||""),String(x[1]||"")]).slice(0,2); }),
+    steps:(r.steps||[]).map(function(s){ return String(s); })
+  };
+}
+
+function save(){
+  try{ localStorage.setItem(KEY,JSON.stringify(REC)); }
+  catch(e){ /* storage full or unavailable */ }
+}
+function load(){
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(raw){ var p=JSON.parse(raw); if(Array.isArray(p) && p.length){ REC=p.map(norm); return; } }
+  }catch(e){}
+  REC=demo().map(norm);
+}
+load();
+
+function el(tag,cls,txt){ var e=document.createElement(tag); if(cls)e.className=cls; if(txt!=null)e.textContent=txt; return e; }
+function rec(id){ for(var i=0;i<REC.length;i++) if(REC[i].id===id) return REC[i]; return null; }
+
+var grid=document.getElementById("grid");
+function updateStats(){
+  document.getElementById("count").textContent=REC.length;
+  document.getElementById("favcount").textContent=REC.filter(function(r){return r.fav;}).length;
+}
+function renderGrid(){
+  grid.innerHTML="";
+  var q=(document.getElementById("search").value||"").toLowerCase().trim();
+  var cat=document.getElementById("filter").value;
+  var favonly=document.getElementById("favsw").checked;
+  var list=[];
+  for(var i=0;i<REC.length;i++){
+    var r=REC[i];
+    if(cat!=="All" && r.cat!==cat) continue;
+    if(favonly && !r.fav) continue;
+    if(q){ var hay=(r.name+" "+r.desc+" "+r.cat).toLowerCase(); if(hay.indexOf(q)<0) continue; }
+    list.push(r);
+  }
+  if(!list.length){
+    var empty=el("div","empty","");
+    empty.innerHTML="<div style=\"font-size:38px;margin-bottom:10px;\">\uD83C\uDF6D</div>Nothing in the pantry yet.<br>Try another filter or add a recipe.";
+    grid.appendChild(empty);
+    return;
+  }
+  list.forEach(function(r){
+    var card=el("div","card");
+    var cover=el("div","cover "+r.cat.toLowerCase());
+    cover.textContent=EMOJI[r.cat];
+    var favb=el("button","fav"+(r.fav?" on":""), r.fav?"\u2665":"\u2661");
+    favb.setAttribute("aria-label","Toggle favorite");
+    favb.addEventListener("click",function(ev){ ev.stopPropagation(); r.fav=!r.fav; save(); renderGrid(); updateStats(); });
+    cover.appendChild(favb);
+    card.appendChild(cover);
+    var info=el("div","info");
+    info.appendChild(el("span","catpilltitle c-"+r.cat.toLowerCase(), r.cat));
+    info.appendChild(el("h3",null,r.name));
+    info.appendChild(el("p","desc",r.desc||"No description yet."));
+    var meta=el("div","meta");
+    meta.appendChild(el("span",null,"\u23F1 "+ (r.time||"\u2014")));
+    meta.appendChild(el("span",null,"\uD83C\uDF7D "+r.servings+" serv"));
+    meta.appendChild(el("span",null,r.ingredients.length+" ing"));
+    info.appendChild(meta);
+    card.appendChild(info);
+    var foot=el("div","foot");
+    var vb=el("button","btn ghost","View");
+    vb.addEventListener("click",function(ev){ ev.stopPropagation(); openView(r.id); });
+    foot.appendChild(vb);
+    var eb=el("button","btn","Edit");
+    eb.addEventListener("click",function(ev){ ev.stopPropagation(); openEdit(r.id); });
+    foot.appendChild(eb);
+    card.appendChild(foot);
+    card.addEventListener("click",function(){ openView(r.id); });
+    grid.appendChild(card);
+  });
+}
+function render(){ renderGrid(); updateStats(); }
+
+document.getElementById("search").addEventListener("input",renderGrid);
+document.getElementById("filter").addEventListener("change",renderGrid);
+document.getElementById("favsw").addEventListener("change",renderGrid);
+
+// ---- view modal ----
+var viewingId=null;
+var servings=2;
+function openView(id){
+  var r=rec(id); if(!r) return;
+  viewingId=id;
+  document.getElementById("viewTitle").textContent=r.name;
+  document.getElementById("viewCat").textContent=r.cat.toUpperCase();
+  servings=r.servings;
+  document.getElementById("sv").value=servings;
+  document.getElementById("svnum").textContent=servings;
+  renderIng();
+  renderSteps();
+  document.getElementById("view").classList.add("open");
+  document.getElementById("sv").focus();
+}
+document.getElementById("sv").addEventListener("input",function(){
+  servings=+this.value;
+  document.getElementById("svnum").textContent=servings;
+  renderIng();
+});
+function qtyNum(s){ var m=String(s).match(/^-?\d+(\.\d+)?/); return m?parseFloat(m[0]):0; }
+function qtyUnit(s){ var m=String(s).match(/[a-zA-Z ]+$/); return m?m[0].trim():""; }
+function fmtQty(n){ var x=Math.round(n*100)/100; return (String(x).length<=5)?String(x):x.toFixed(2); }
+function renderIng(){
+  var r=rec(viewingId); if(!r) return;
+  var list=document.getElementById("ingList");
+  list.innerHTML="";
+  var ratio=servings/r.servings;
+  for(var i=0;i<r.ingredients.length;i++){
+    var ing=r.ingredients[i];
+    var qty=fmtQty(qtyNum(ing[0])*ratio);
+    var unit=qtyUnit(ing[0]);
+    var li=el("li");
+    var cb=document.createElement("input"); cb.type="checkbox"; cb.className="cb"; cb.setAttribute("aria-label","check "+ing[1]);
+    cb.addEventListener("change",function(){ this.closest("li").classList.toggle("done",this.checked); });
+    var span=document.createElement("span"); span.className="ingtxt";
+    var q=el("span","q",qty+" ");
+    var uu=el("span","u",unit+" ");
+    var name=document.createElement("span");
+    name.className="ingname"; name.textContent=ing[1];
+    span.appendChild(q); if(unit) span.appendChild(uu); span.appendChild(name);
+    li.appendChild(cb); li.appendChild(span);
+    list.appendChild(li);
+  }
+}
+function renderSteps(){
+  var r=rec(viewingId); if(!r) return;
+  var list=document.getElementById("stepList");
+  list.innerHTML="";
+  for(var i=0;i<r.steps.length;i++){
+    var li=el("li");
+    var span=el("span","step",r.steps[i]);
+    li.appendChild(span);
+    li.addEventListener("click",function(){ this.classList.toggle("checked"); });
+    list.appendChild(li);
+  }
+}
+// tabs
+document.getElementById("tabIng").addEventListener("click",function(){
+  document.getElementById("tabIng").classList.add("active"); document.getElementById("tabIng").setAttribute("aria-selected","true");
+  document.getElementById("tabStep").classList.remove("active"); document.getElementById("tabStep").setAttribute("aria-selected","false");
+  document.getElementById("ingPanel").classList.add("active"); document.getElementById("stepPanel").classList.remove("active");
+});
+document.getElementById("tabStep").addEventListener("click",function(){
+  document.getElementById("tabStep").classList.add("active"); document.getElementById("tabStep").setAttribute("aria-selected","true");
+  document.getElementById("tabIng").classList.remove("active"); document.getElementById("tabIng").setAttribute("aria-selected","false");
+  document.getElementById("stepPanel").classList.add("active"); document.getElementById("ingPanel").classList.remove("active");
+});
+function closeView(){ document.getElementById("view").classList.remove("open"); viewingId=null; }
+document.getElementById("viewX").addEventListener("click",closeView);
+document.getElementById("view").addEventListener("click",function(e){ if(e.target===this) closeView(); });
+
+// ---- edit modal ----
+var ingRowsEl=document.getElementById("ingRows");
+var stepRowsEl=document.getElementById("stepRows");
+function addIngRow(qty,name){
+  var row=el("div","ing-row");
+  var q=document.createElement("input"); q.className="iq"; q.placeholder="1 cup"; q.value=qty||"";
+  var n=document.createElement("input"); n.placeholder="ingredient name"; n.value=name||"";
+  var d=el("button","del","\u00D7"); d.setAttribute("type","button"); d.setAttribute("aria-label","Remove ingredient");
+  d.addEventListener("click",function(){ row.remove(); });
+  row.appendChild(q); row.appendChild(n); row.appendChild(d);
+  ingRowsEl.appendChild(row);
+}
+function addStepRow(txt){
+  var row=el("div","step-row");
+  var n=el("span","n",String(stepRowsEl.children.length+1));
+  var t=document.createElement("textarea"); t.placeholder="Write a step..."; t.value=txt||"";
+  var d=el("button","del","\u00D7"); d.setAttribute("type","button"); d.setAttribute("aria-label","Remove step");
+  d.addEventListener("click",function(){ row.remove(); renSteps(); });
+  row.appendChild(n); row.appendChild(t); row.appendChild(d);
+  stepRowsEl.appendChild(row);
+}
+function renSteps(){
+  var rows=stepRowsEl.children;
+  for(var i=0;i<rows.length;i++){
+    var n=rows[i].querySelector(".n");
+    if(n) n.textContent=i+1;
+  }
+}
+document.getElementById("addIng").addEventListener("click",function(){ addIngRow(); });
+document.getElementById("addStep").addEventListener("click",function(){ addStepRow(); });
+
+function openEdit(id){
+  var r=id?rec(id):null;
+  editingId=id||null;
+  document.getElementById("editTitle").textContent=r?"Edit recipe":"New recipe";
+  document.getElementById("fName").value=r?r.name:"";
+  document.getElementById("fTime").value=r?r.time:"";
+  document.getElementById("fServ").value=r?r.servings:2;
+  document.getElementById("fCat").value=r?r.cat:"Dinner";
+  document.getElementById("fDesc").value=r?r.desc:"";
+  ingRowsEl.innerHTML=""; stepRowsEl.innerHTML="";
+  if(r){
+    r.ingredients.forEach(function(ing){ addIngRow(ing[0],ing[1]); });
+    r.steps.forEach(function(s){ addStepRow(s); });
+  }
+  if(!r){ addIngRow(); addIngRow(); addStepRow(); }
+  document.getElementById("edit").classList.add("open");
+  document.getElementById("fName").focus();
+}
+document.getElementById("addBtn").addEventListener("click",function(){ openEdit(); });
+function closeEdit(){ document.getElementById("edit").classList.remove("open"); editingId=null; }
+document.getElementById("editX").addEventListener("click",closeEdit);
+document.getElementById("cancelEdit").addEventListener("click",closeEdit);
+document.getElementById("edit").addEventListener("click",function(e){ if(e.target===this) closeEdit(); });
+
+document.getElementById("form").addEventListener("submit",function(e){
+  e.preventDefault();
+  var name=document.getElementById("fName").value.trim();
+  if(!name){ document.getElementById("fName").focus(); return; }
+  var ingredients=[];
+  var rows=ingRowsEl.querySelectorAll(".ing-row");
+  for(var i=0;i<rows.length;i++){
+    var q=rows[i].querySelector("input").value.trim();
+    var n=rows[i].querySelector("input:nth-child(2)").value.trim();
+    if(!q && !n) continue;
+    ingredients.push([q,n]);
+  }
+  var steps=[];
+  var srows=stepRowsEl.querySelectorAll(".step-row textarea");
+  for(var j=0;j<srows.length;j++){
+    var v=srows[j].value.trim();
+    if(v) steps.push(v);
+  }
+  if(editingId){
+    var t=rec(editingId);
+    if(t){
+      t.name=name; t.time=document.getElementById("fTime").value.trim();
+      t.servings=Math.max(1,+document.getElementById("fServ").value||2);
+      t.cat=document.getElementById("fCat").value; t.desc=document.getElementById("fDesc").value.trim();
+      t.ingredients=ingredients; t.steps=steps;
+    }
+  } else {
+    REC.push(norm({
+      name:name, time:document.getElementById("fTime").value.trim(),
+      servings:Math.max(1,+document.getElementById("fServ").value||2),
+      cat:document.getElementById("fCat").value, desc:document.getElementById("fDesc").value.trim(),
+      ingredients:ingredients, steps:steps
+    }));
+  }
+  save(); render(); closeEdit();
+});
+
+// reset
+document.getElementById("reset").addEventListener("click",function(){
+  try{ localStorage.removeItem(KEY); }catch(e){}
+  REC=demo().map(norm);
+  document.getElementById("search").value="";
+  document.getElementById("filter").value="All";
+  document.getElementById("favsw").checked=false;
+  render();
+});
+
+// esc close modals + focus trap-ish
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape"){
+    if(document.getElementById("edit").classList.contains("open")) closeEdit();
+    else if(document.getElementById("view").classList.contains("open")) closeView();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
